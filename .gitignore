@@ -69,3 +69,6 @@ anaconda_projects/
 # Visualizations output
 visualizations/
 
+# Documentation with sensitive info
+SETUP_TWITTER_OAUTH.md
+
