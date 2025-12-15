@@ -20,14 +20,15 @@ CityPulse integrates multiple data sources to provide insights into how Chicagoa
 - **Libraries**: 
   - pandas, numpy - Data manipulation
   - matplotlib, seaborn, plotly - Visualization
-  - snscrape - Twitter data collection
+  - tweepy - Twitter API v2 client for data collection
   - TextBlob, VADER - Sentiment analysis
   - requests - API integration
   - dash, dash-bootstrap-components - Interactive dashboard
+  - python-dotenv - Environment variable management
 - **Data Sources**:
   - Chicago 311 Service Requests API
   - Chicago Transit Authority (CTA) Ridership Data
-  - Twitter/X (via snscrape)
+  - Twitter/X (via Twitter API v2)
 
 ## Project Structure
 
@@ -80,10 +81,84 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Note: If `snscrape` installation fails, you may need to install it separately:
+4. Set up Twitter API credentials (optional, for Twitter data collection):
+   - See [Twitter API Setup](#twitter-api-setup) section below
+   - Create a `.env` file in the project root with your Twitter API credentials
+
+## Quick Start
+
+Follow these steps to get CityPulse up and running quickly:
+
+### Option A: Run Everything at Once (Recommended)
+
 ```bash
-pip install git+https://github.com/JustAnotherArchivist/snscrape.git
+python run_pipeline.py
 ```
+
+This will run all steps sequentially: data collection, cleaning, sentiment analysis, and visualization.
+
+### Option B: Step-by-Step
+
+1. **Collect Data** (using Jupyter Notebooks - Recommended for first time):
+   ```bash
+   jupyter notebook
+   # Then open and run: notebooks/week1_data_cleaning.ipynb
+   ```
+
+   Or run scripts directly:
+   ```bash
+   # Collect 311 data
+   python src/data_collection/collect_311_data.py
+   
+   # Collect CTA ridership data
+   python src/data_collection/collect_cta_data.py
+   
+   # Collect Twitter data (requires API setup - see Twitter API Setup section)
+   python src/data_collection/collect_tweets_tweepy.py
+   ```
+
+2. **Clean the Data**:
+   ```bash
+   python src/data_cleaning/clean_data.py
+   ```
+   Or run the cleaning section in `notebooks/week1_data_cleaning.ipynb`
+
+3. **Analyze Sentiment**:
+   ```bash
+   # Analyze tweet sentiment
+   python src/sentiment/sentiment_analyzer.py
+   
+   # Aggregate by day
+   python src/sentiment/aggregate_sentiment.py
+   
+   # Integrate all datasets
+   python src/sentiment/integrate_data.py
+   ```
+   Or use `notebooks/week2_sentiment_analysis.ipynb`
+
+4. **Create Visualizations**:
+   ```bash
+   # Run correlation analysis
+   python src/visualization/correlation_analysis.py
+   
+   # Generate visualizations
+   python src/visualization/visualizations.py
+   ```
+   Or use `notebooks/week3_analysis.ipynb`
+
+5. **Launch the Dashboard**:
+   ```bash
+   python src/visualization/dashboard.py
+   ```
+   Then open your browser to: **http://127.0.0.1:8050**
+
+### What to Expect
+
+After running the pipeline, you should have:
+- **Data files** in `data/cleaned/` and `data/combined/`
+- **Visualizations** in `visualizations/` folder
+- **Correlation report** in `docs/correlation_report.txt`
+- **Interactive dashboard** running on localhost
 
 ## Usage
 
@@ -98,8 +173,8 @@ python src/data_collection/collect_311_data.py
 # Collect CTA ridership data
 python src/data_collection/collect_cta_data.py
 
-# Collect Twitter data
-python src/data_collection/collect_tweets.py
+# Collect Twitter data (requires Twitter API setup - see Twitter API Setup section)
+python src/data_collection/collect_tweets_tweepy.py
 ```
 
 Alternatively, run all collection scripts from the Week 1 notebook:
@@ -179,10 +254,104 @@ The dashboard will be available at `http://127.0.0.1:8050`
 - **Update Frequency**: Daily
 
 ### Twitter/X Data
-- **Source**: Twitter/X via snscrape
-- **Hashtags**: #ChicagoCommute, #CTA, #RushHour, #Chicago, #ChiTransit, #ChicagoTraffic
+- **Source**: Twitter/X via Twitter API v2 (official API)
+- **Method**: Using `tweepy` library
+- **Hashtags**: #CTAFail, #CTADelays, #CTA, #CTARedLine, #CTABlueLine, #ChicagoCommute, #CTABus
 - **Data**: Tweet content, timestamps, engagement metrics
 - **Volume**: ~1,000-2,000 tweets per collection
+- **Setup Required**: Twitter Developer Account and API credentials (see Twitter API Setup section below)
+
+#### Twitter API Setup
+
+This project uses the **official Twitter API v2** via `tweepy` to collect real Twitter/X data. The deprecated `snscrape` method is no longer supported.
+
+##### Step 1: Get Twitter Developer Account
+
+1. Go to https://developer.twitter.com/
+2. Sign in with your Twitter/X account
+3. Apply for a developer account (usually approved quickly for academic/research use)
+4. Create a new "App" or "Project"
+
+##### Step 2: Get Your API Credentials
+
+You have two options:
+
+**Option A: Bearer Token (Simplest - Read-only access)**
+
+1. In your Twitter Developer Portal, go to your App
+2. Navigate to "Keys and Tokens"
+3. Under "Bearer Token", click "Generate"
+4. Copy the Bearer Token
+
+**Option B: OAuth 1.0a (Full access - if you need write permissions)**
+
+1. In your Twitter Developer Portal, go to your App
+2. Navigate to "Keys and Tokens"
+3. Copy:
+   - API Key
+   - API Secret Key
+   - Access Token
+   - Access Token Secret
+
+##### Step 3: Set Up Credentials
+
+Create a `.env` file in the project root:
+
+```bash
+# For Bearer Token (simplest)
+TWITTER_BEARER_TOKEN=your_bearer_token_here
+
+# OR for OAuth (if using full API keys)
+TWITTER_API_KEY=your_api_key
+TWITTER_API_SECRET=your_api_secret
+TWITTER_ACCESS_TOKEN=your_access_token
+TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
+```
+
+**Important**: The `.env` file is already in `.gitignore` to keep your credentials safe!
+
+##### Step 4: Install Tweepy
+
+```bash
+pip install tweepy python-dotenv
+```
+
+##### Step 5: Use the Collection Script
+
+```bash
+python src/data_collection/collect_tweets_tweepy.py
+```
+
+Or in a notebook:
+```python
+from data_collection.collect_tweets_tweepy import main as collect_tweets_tweepy
+collect_tweets_tweepy()
+```
+
+##### API Limits (Free Tier)
+
+- **500,000 tweets per month**
+- **10,000 tweets per day**
+- **100 tweets per request** (pagination available)
+- **Last 7 days** of tweets only (for recent search)
+
+This is more than enough for the project (we need ~1,000-2,000 tweets).
+
+##### Troubleshooting Twitter API
+
+**"No Twitter API credentials found"**
+- Make sure you created the `.env` file
+- Check that the variable names match exactly
+- Verify the file is in the project root
+
+**"Rate limit reached"**
+- The script automatically waits for rate limits
+- Free tier allows 10k tweets/day - spread collection over multiple days if needed
+
+**"Unauthorized"**
+- Check your Bearer Token/API keys are correct
+- Make sure your Twitter Developer account is approved
+- Verify your app has the right permissions
 
 ## Methodology
 
@@ -253,6 +422,29 @@ The project includes several types of visualizations:
 - `docs/data_dictionary.md` - Complete data dictionary
 - `docs/insights.md` - Key findings and insights
 
+## Troubleshooting
+
+### Issue: Twitter API not working
+- Make sure you've set up your Twitter API credentials (see Twitter API Setup section)
+- Verify your `.env` file exists and contains the correct credentials
+- Check that your Twitter Developer account is approved
+
+### Issue: No data collected
+- Check your internet connection
+- Verify API endpoints are accessible
+- Check the logs for error messages
+- For Twitter data, ensure API credentials are correctly configured
+
+### Issue: Import errors
+- Make sure you're in the project root directory
+- Verify virtual environment is activated
+- Check that all packages are installed: `pip list`
+- Ensure you've installed tweepy: `pip install tweepy python-dotenv`
+
+### Issue: Dashboard won't start
+- Check if port 8050 is already in use
+- Try changing the port in `dashboard.py`: `run_dashboard(port=8051)`
+
 ## Limitations
 
 1. **Data Quality**: Social media data may not represent all demographics
@@ -260,6 +452,7 @@ The project includes several types of visualizations:
 3. **Causation**: Correlations do not imply causation
 4. **External Factors**: Weather, events, and news can influence sentiment
 5. **Bias**: Social media users may not represent the full population
+6. **API Limits**: Twitter API free tier has rate limits (10k tweets/day)
 
 ## Future Extensions
 
@@ -283,7 +476,8 @@ This project is for educational and portfolio purposes.
 ## Acknowledgments
 
 - Chicago Data Portal for providing open data APIs
-- snscrape developers for Twitter scraping capabilities
+- Twitter/X for providing the official API v2
+- Tweepy developers for the excellent Twitter API wrapper
 - VADER and TextBlob developers for sentiment analysis tools
 
 ## Author
