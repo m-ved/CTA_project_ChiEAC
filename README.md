@@ -393,6 +393,74 @@ See [docs/insights.md](docs/insights.md) for detailed future extensions:
 5. Multi-modal integration
 6. Advanced NLP features
 
+## Deployment
+
+### Deploying to Google Cloud Platform (Cloud Run)
+
+The project includes Docker configuration for easy deployment to GCP Cloud Run.
+
+#### Prerequisites
+
+1. Install Google Cloud SDK:
+   ```bash
+   brew install --cask google-cloud-sdk
+   ```
+
+2. Authenticate and set up:
+   ```bash
+   gcloud auth login
+   gcloud projects create chicago-dashboard --name="Chicago Dashboard"
+   gcloud config set project chicago-dashboard
+   gcloud services enable cloudbuild.googleapis.com run.googleapis.com
+   ```
+
+#### Quick Deploy
+
+```bash
+# Set your project ID
+export PROJECT_ID=$(gcloud config get-value project)
+
+# Build and deploy
+gcloud builds submit --tag gcr.io/$PROJECT_ID/chicago-dashboard
+
+# Deploy to Cloud Run
+gcloud run deploy chicago-dashboard \
+  --image gcr.io/$PROJECT_ID/chicago-dashboard \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 8050 \
+  --memory 2Gi \
+  --cpu 2 \
+  --timeout 300 \
+  --max-instances 10
+```
+
+#### Automated Deploy (using Cloud Build)
+
+```bash
+gcloud builds submit --config cloudbuild.yaml
+```
+
+After deployment, you'll receive a URL like: `https://chicago-dashboard-xxxxx-uc.a.run.app`
+
+#### Update After Code Changes
+
+```bash
+gcloud builds submit --tag gcr.io/$PROJECT_ID/chicago-dashboard
+gcloud run deploy chicago-dashboard \
+  --image gcr.io/$PROJECT_ID/chicago-dashboard \
+  --region us-central1
+```
+
+#### View Logs
+
+```bash
+gcloud run services logs read chicago-dashboard --region us-central1
+```
+
+**Note**: The dashboard is configured to use the `PORT` environment variable (set automatically by Cloud Run) and binds to `0.0.0.0` for external access.
+
 ## Contributing
 
 This is a portfolio project. For questions or suggestions, please open an issue.
