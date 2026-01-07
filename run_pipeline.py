@@ -26,14 +26,13 @@ def main():
         ("Data Collection", [
             ("311 Data", "data_collection.collect_311_data"),
             ("CTA Data", "data_collection.collect_cta_data"),
-            ("Twitter Data", "data_collection.collect_tweets_tweepy")
+            ("Traffic Data", "data_collection.collect_traffic_data"),
+            ("Crime Data", "data_collection.collect_crime_data")
         ]),
         ("Data Cleaning", [
             ("Clean All Data", "data_cleaning.clean_data")
         ]),
-        ("Sentiment Analysis", [
-            ("Analyze Sentiment", "sentiment.sentiment_analyzer"),
-            ("Aggregate Sentiment", "sentiment.aggregate_sentiment"),
+        ("Data Integration", [
             ("Integrate Data", "sentiment.integrate_data")
         ]),
         ("Analysis & Visualization", [

@@ -1,18 +1,18 @@
-# CityPulse: Urban Sentiment & Mobility Dashboard
+# CityPulse: Urban Mobility & Service Dashboard
 
-An integrated dashboard that visualizes public sentiment and mobility patterns in Chicago, combining social media sentiment analysis with official city transportation and 311 service data to reveal civic trends and commuter experiences.
+An integrated dashboard that visualizes mobility patterns and service requests in Chicago, combining transportation data, bike share usage, crime statistics, and 311 service data to reveal urban trends and patterns.
 
 ## Project Overview
 
-CityPulse integrates multiple data sources to provide insights into how Chicagoans' moods correlate with daily mobility challenges. The project demonstrates applied NLP, API integration, data wrangling, and visualization techniques.
+CityPulse integrates multiple data sources to provide insights into how transportation usage, bike share patterns, crime, and service requests correlate with each other. The project demonstrates API integration, data wrangling, statistical analysis, and visualization techniques.
 
 ## Features
 
-- **Sentiment Analysis**: Analyzes Twitter/X posts using VADER and TextBlob to extract public sentiment
-- **Data Integration**: Combines social media sentiment with CTA ridership and 311 service request data
+- **Data Integration**: Combines CTA ridership, traffic volume, crime data, and 311 service request data
 - **Interactive Dashboard**: Real-time visualization of trends and correlations
-- **Correlation Analysis**: Identifies relationships between sentiment, ridership, and complaints
-- **Geospatial Visualization**: Maps complaint locations and sentiment patterns
+- **Correlation Analysis**: Identifies relationships between ridership, complaints, bike trips, and crime
+- **Geospatial Visualization**: Maps complaint locations with detailed information
+- **Statistical Analysis**: Advanced statistical metrics including confidence intervals, p-values, and effect sizes
 
 ## Technology Stack
 
@@ -20,15 +20,15 @@ CityPulse integrates multiple data sources to provide insights into how Chicagoa
 - **Libraries**: 
   - pandas, numpy - Data manipulation
   - matplotlib, seaborn, plotly - Visualization
-  - tweepy - Twitter API v2 client for data collection
-  - TextBlob, VADER - Sentiment analysis
   - requests - API integration
   - dash, dash-bootstrap-components - Interactive dashboard
+  - scipy, scikit-learn - Statistical analysis
   - python-dotenv - Environment variable management
 - **Data Sources**:
   - Chicago 311 Service Requests API
   - Chicago Transit Authority (CTA) Ridership Data
-  - Twitter/X (via Twitter API v2)
+  - Traffic Volume Data
+  - Chicago Crime Data
 
 ## Project Structure
 
@@ -50,7 +50,13 @@ chieac-project/
 ├── docs/
 │   ├── data_dictionary.md
 │   ├── insights.md
+│   ├── 1_page_insights.md
+│   ├── tableau_dashboard_guide.md
 │   └── README.md
+├── data/
+│   └── exports/          # Tableau/Power BI export files
+├── scripts/
+│   └── export_for_tableau.py
 ├── requirements.txt
 └── README.md
 ```
@@ -81,9 +87,8 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Set up Twitter API credentials (optional, for Twitter data collection):
-   - See [Twitter API Setup](#twitter-api-setup) section below
-   - Create a `.env` file in the project root with your Twitter API credentials
+4. Configure environment variables (if needed):
+   - Create a `.env` file in the project root if you need to customize API endpoints or settings
 
 ## Quick Start
 
@@ -95,7 +100,7 @@ Follow these steps to get CityPulse up and running quickly:
 python run_pipeline.py
 ```
 
-This will run all steps sequentially: data collection, cleaning, sentiment analysis, and visualization.
+This will run all steps sequentially: data collection, cleaning, and visualization.
 
 ### Option B: Step-by-Step
 
@@ -113,8 +118,11 @@ This will run all steps sequentially: data collection, cleaning, sentiment analy
    # Collect CTA ridership data
    python src/data_collection/collect_cta_data.py
    
-   # Collect Twitter data (requires API setup - see Twitter API Setup section)
-   python src/data_collection/collect_tweets_tweepy.py
+   # Collect traffic volume data
+   python src/data_collection/collect_traffic_data.py
+   
+   # Collect crime data
+   python src/data_collection/collect_crime_data.py
    ```
 
 2. **Clean the Data**:
@@ -123,18 +131,11 @@ This will run all steps sequentially: data collection, cleaning, sentiment analy
    ```
    Or run the cleaning section in `notebooks/week1_data_cleaning.ipynb`
 
-3. **Analyze Sentiment**:
+3. **Integrate Data**:
    ```bash
-   # Analyze tweet sentiment
-   python src/sentiment/sentiment_analyzer.py
-   
-   # Aggregate by day
-   python src/sentiment/aggregate_sentiment.py
-   
    # Integrate all datasets
    python src/sentiment/integrate_data.py
    ```
-   Or use `notebooks/week2_sentiment_analysis.ipynb`
 
 4. **Create Visualizations**:
    ```bash
@@ -173,8 +174,11 @@ python src/data_collection/collect_311_data.py
 # Collect CTA ridership data
 python src/data_collection/collect_cta_data.py
 
-# Collect Twitter data (requires Twitter API setup - see Twitter API Setup section)
-python src/data_collection/collect_tweets_tweepy.py
+# Collect traffic volume data
+python src/data_collection/collect_traffic_data.py
+
+# Collect crime data
+python src/data_collection/collect_crime_data.py
 ```
 
 Alternatively, run all collection scripts from the Week 1 notebook:
@@ -190,24 +194,13 @@ Clean and preprocess all collected data:
 python src/data_cleaning/clean_data.py
 ```
 
-### 3. Sentiment Analysis
+### 3. Data Integration
 
-Analyze tweet sentiment and aggregate by day:
+Integrate all datasets:
 
 ```bash
-# Analyze sentiment
-python src/sentiment/sentiment_analyzer.py
-
-# Aggregate by day
-python src/sentiment/aggregate_sentiment.py
-
 # Integrate all datasets
 python src/sentiment/integrate_data.py
-```
-
-Or use the Week 2 notebook:
-```bash
-jupyter notebook notebooks/week2_sentiment_analysis.ipynb
 ```
 
 ### 4. Analysis and Visualization
@@ -229,13 +222,37 @@ jupyter notebook notebooks/week3_analysis.ipynb
 
 ### 5. Interactive Dashboard
 
-Launch the interactive dashboard:
+**Option A: Dash Dashboard (Python-based)**
+
+Launch the interactive Dash dashboard:
 
 ```bash
 python src/visualization/dashboard.py
 ```
 
 The dashboard will be available at `http://127.0.0.1:8050`
+
+**Option B: Tableau/Power BI Dashboard (Required by Project Spec)**
+
+The project specification requires a Tableau or Power BI dashboard. To create one:
+
+1. **Export data for Tableau/Power BI**:
+   ```bash
+   python scripts/export_for_tableau.py
+   ```
+   This creates optimized data files in `data/exports/`:
+   - `combined_data_for_tableau.csv`
+   - `combined_data_for_tableau.xlsx`
+
+2. **Follow the dashboard guide**:
+   - See `docs/tableau_dashboard_guide.md` for detailed step-by-step instructions
+   - The guide covers both Tableau and Power BI dashboard creation
+   - Includes all required features: time series, maps, filters, correlations
+
+3. **Note on Data Sources**:
+   - All data sources use official Chicago Data Portal APIs
+   - Data is collected daily and aggregated by date
+   - No external API credentials required for public data sources
 
 ## Data Sources
 
@@ -253,116 +270,27 @@ The dashboard will be available at `http://127.0.0.1:8050`
 - **Data**: Daily ridership counts by route/station
 - **Update Frequency**: Daily
 
-### Twitter/X Data
-- **Source**: Twitter/X via Twitter API v2 (official API)
-- **Method**: Using `tweepy` library
-- **Hashtags**: #CTAFail, #CTADelays, #CTA, #CTARedLine, #CTABlueLine, #ChicagoCommute, #CTABus
-- **Data**: Tweet content, timestamps, engagement metrics
-- **Volume**: ~1,000-2,000 tweets per collection
-- **Setup Required**: Twitter Developer Account and API credentials (see Twitter API Setup section below)
+### Traffic Volume Data
+- **Source**: Chicago Data Portal
+- **Endpoint**: `https://data.cityofchicago.org/resource/8v9j-bter.json`
+- **Data**: Daily traffic volume counts, average speeds, traffic flow data
+- **Update Frequency**: Daily
 
-#### Twitter API Setup
+### Crime Data
+- **Source**: Chicago Data Portal
+- **Endpoint**: `https://data.cityofchicago.org/resource/ijzp-q8t2.json`
+- **Data**: Daily crime counts by type, arrest rates, location data
+- **Update Frequency**: Daily
 
-This project uses the **official Twitter API v2** via `tweepy` to collect real Twitter/X data. The deprecated `snscrape` method is no longer supported.
 
-##### Step 1: Get Twitter Developer Account
-
-1. Go to https://developer.twitter.com/
-2. Sign in with your Twitter/X account
-3. Apply for a developer account (usually approved quickly for academic/research use)
-4. Create a new "App" or "Project"
-
-##### Step 2: Get Your API Credentials
-
-You have two options:
-
-**Option A: Bearer Token (Simplest - Read-only access)**
-
-1. In your Twitter Developer Portal, go to your App
-2. Navigate to "Keys and Tokens"
-3. Under "Bearer Token", click "Generate"
-4. Copy the Bearer Token
-
-**Option B: OAuth 1.0a (Full access - if you need write permissions)**
-
-1. In your Twitter Developer Portal, go to your App
-2. Navigate to "Keys and Tokens"
-3. Copy:
-   - API Key
-   - API Secret Key
-   - Access Token
-   - Access Token Secret
-
-##### Step 3: Set Up Credentials
-
-Create a `.env` file in the project root:
-
-```bash
-# For Bearer Token (simplest)
-TWITTER_BEARER_TOKEN=your_bearer_token_here
-
-# OR for OAuth (if using full API keys)
-TWITTER_API_KEY=your_api_key
-TWITTER_API_SECRET=your_api_secret
-TWITTER_ACCESS_TOKEN=your_access_token
-TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
-```
-
-**Important**: The `.env` file is already in `.gitignore` to keep your credentials safe!
-
-##### Step 4: Install Tweepy
-
-```bash
-pip install tweepy python-dotenv
-```
-
-##### Step 5: Use the Collection Script
-
-```bash
-python src/data_collection/collect_tweets_tweepy.py
-```
-
-Or in a notebook:
-```python
-from data_collection.collect_tweets_tweepy import main as collect_tweets_tweepy
-collect_tweets_tweepy()
-```
-
-##### API Limits (Free Tier)
-
-- **500,000 tweets per month**
-- **10,000 tweets per day**
-- **100 tweets per request** (pagination available)
-- **Last 7 days** of tweets only (for recent search)
-
-This is more than enough for the project (we need ~1,000-2,000 tweets).
-
-##### Troubleshooting Twitter API
-
-**"No Twitter API credentials found"**
-- Make sure you created the `.env` file
-- Check that the variable names match exactly
-- Verify the file is in the project root
-
-**"Rate limit reached"**
-- The script automatically waits for rate limits
-- Free tier allows 10k tweets/day - spread collection over multiple days if needed
-
-**"Unauthorized"**
-- Check your Bearer Token/API keys are correct
-- Make sure your Twitter Developer account is approved
-- Verify your app has the right permissions
 
 ## Methodology
 
-### Sentiment Analysis
+### Data Integration
 
-1. **VADER**: Valence Aware Dictionary and sEntiment Reasoner
-   - Optimized for social media text
-   - Provides compound polarity score (-1 to 1)
-
-2. **TextBlob**: General-purpose sentiment analysis
-   - Provides polarity (-1 to 1) and subjectivity (0 to 1) scores
+1. **Daily Aggregation**: All datasets are aggregated by date to enable correlation analysis
+2. **Data Merging**: Multiple data sources are merged on date using outer joins to preserve all data points
+3. **Missing Value Handling**: Missing values are filled with 0 for numeric columns to enable calculations
 
 3. **Categorization**: 
    - Positive: polarity ≥ 0.05
@@ -418,22 +346,24 @@ The project includes several types of visualizations:
 - `visualizations/correlation_matrix.csv` - Correlation matrix
 - `visualizations/*.html` - Interactive visualizations
 
+### Tableau/Power BI Export Files
+- `data/exports/combined_data_for_tableau.csv` - Optimized data for Tableau/Power BI (CSV format)
+- `data/exports/combined_data_for_tableau.xlsx` - Optimized data for Tableau/Power BI (Excel format)
+- Created by running: `python scripts/export_for_tableau.py`
+
 ### Documentation
 - `docs/data_dictionary.md` - Complete data dictionary
-- `docs/insights.md` - Key findings and insights
+- `docs/insights.md` - Detailed findings and insights
+- `docs/1_page_insights.md` - **1-page data story** (required by project spec)
+- `docs/tableau_dashboard_guide.md` - Step-by-step guide for creating Tableau/Power BI dashboard
 
 ## Troubleshooting
-
-### Issue: Twitter API not working
-- Make sure you've set up your Twitter API credentials (see Twitter API Setup section)
-- Verify your `.env` file exists and contains the correct credentials
-- Check that your Twitter Developer account is approved
 
 ### Issue: No data collected
 - Check your internet connection
 - Verify API endpoints are accessible
 - Check the logs for error messages
-- For Twitter data, ensure API credentials are correctly configured
+- Ensure data collection scripts are running correctly
 
 ### Issue: Import errors
 - Make sure you're in the project root directory
@@ -447,12 +377,11 @@ The project includes several types of visualizations:
 
 ## Limitations
 
-1. **Data Quality**: Social media data may not represent all demographics
-2. **Sample Size**: Limited tweet volume may affect statistical significance
+1. **Data Quality**: Data is dependent on API availability and data portal updates
+2. **Sample Size**: Limited data periods may affect statistical significance
 3. **Causation**: Correlations do not imply causation
-4. **External Factors**: Weather, events, and news can influence sentiment
-5. **Bias**: Social media users may not represent the full population
-6. **API Limits**: Twitter API free tier has rate limits (10k tweets/day)
+4. **External Factors**: Weather, events, and news can influence patterns
+5. **API Limits**: Some APIs may have rate limits or data availability constraints
 
 ## Future Extensions
 

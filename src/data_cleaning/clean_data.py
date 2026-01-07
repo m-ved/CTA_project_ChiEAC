@@ -224,26 +224,69 @@ def clean_cta_data(df: pd.DataFrame) -> pd.DataFrame:
     return df_clean
 
 
-def clean_tweet_data(df: pd.DataFrame) -> pd.DataFrame:
+def clean_traffic_data(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Clean Twitter/X data
+    Clean traffic volume data
     
     Args:
-        df: Raw tweet DataFrame
+        df: Raw traffic DataFrame
     
     Returns:
         Cleaned DataFrame
     """
-    logger.info("Cleaning tweet data")
+    logger.info("Cleaning traffic volume data")
+    df_clean = df.copy()
+    
+    # Standardize column names first
+    df_clean.columns = df_clean.columns.str.lower().str.replace(' ', '_')
+    
+    # Normalize timestamps - use 'time' column from Traffic Tracker dataset
+    date_cols = ['time', 'date', 'time_of_day']
+    df_clean = normalize_timestamps(df_clean, date_cols)
+    
+    # Remove duplicates
+    df_clean = remove_duplicates(df_clean)
+    
+    # Handle missing values
+    df_clean = handle_missing_values(df_clean, strategy='fill')
+    
+    # Ensure numeric columns are numeric
+    numeric_cols = ['speed', 'bus_count', 'message_count', 'volume', 'count']
+    for col in numeric_cols:
+        if col in df_clean.columns:
+            df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce').fillna(0)
+    
+    # Extract date for aggregation - use 'time' column if available
+    if 'time' in df_clean.columns:
+        df_clean['date'] = pd.to_datetime(df_clean['time'], errors='coerce').dt.date
+    elif 'date' in df_clean.columns:
+        df_clean['date'] = pd.to_datetime(df_clean['date'], errors='coerce').dt.date
+    
+    logger.info(f"Cleaned traffic data: {len(df_clean)} records")
+    
+    return df_clean
+
+
+def clean_crime_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Clean crime data
+    
+    Args:
+        df: Raw crime DataFrame
+    
+    Returns:
+        Cleaned DataFrame
+    """
+    logger.info("Cleaning crime data")
     df_clean = df.copy()
     
     # Normalize timestamps
-    date_cols = ['date', 'created_at']
+    date_cols = ['date', 'updated_on']
     df_clean = normalize_timestamps(df_clean, date_cols)
     
-    # Remove duplicates based on tweet_id
-    if 'tweet_id' in df_clean.columns:
-        df_clean = remove_duplicates(df_clean, subset=['tweet_id'])
+    # Remove duplicates based on case_number
+    if 'case_number' in df_clean.columns:
+        df_clean = remove_duplicates(df_clean, subset=['case_number'])
     else:
         df_clean = remove_duplicates(df_clean)
     
@@ -253,17 +296,15 @@ def clean_tweet_data(df: pd.DataFrame) -> pd.DataFrame:
     # Standardize column names
     df_clean.columns = df_clean.columns.str.lower().str.replace(' ', '_')
     
-    # Ensure numeric columns are numeric
-    numeric_cols = ['retweet_count', 'like_count', 'reply_count', 'quote_count']
-    for col in numeric_cols:
-        if col in df_clean.columns:
-            df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce').fillna(0)
+    # Extract date for aggregation
+    if 'date' in df_clean.columns:
+        df_clean['date'] = pd.to_datetime(df_clean['date'], errors='coerce').dt.date
     
-    # Clean tweet content (remove extra whitespace)
-    if 'content' in df_clean.columns:
-        df_clean['content'] = df_clean['content'].str.strip()
+    # Ensure arrest column is boolean/numeric
+    if 'arrest' in df_clean.columns:
+        df_clean['arrest'] = pd.to_numeric(df_clean['arrest'], errors='coerce').fillna(0)
     
-    logger.info(f"Cleaned tweet data: {len(df_clean)} records")
+    logger.info(f"Cleaned crime data: {len(df_clean)} records")
     
     return df_clean
 
@@ -288,11 +329,18 @@ def main():
         df_cta = None
     
     try:
-        df_tweets = pd.read_csv(PROJECT_ROOT / "data" / "raw" / "tweets_raw.csv")
-        logger.info(f"Loaded tweet data: {len(df_tweets)} records")
+        df_traffic = pd.read_csv(PROJECT_ROOT / "data" / "raw" / "traffic_raw.csv")
+        logger.info(f"Loaded Traffic data: {len(df_traffic)} records")
     except FileNotFoundError:
-        logger.warning("tweets_raw.csv not found. Skipping tweet data cleaning.")
-        df_tweets = None
+        logger.warning("traffic_raw.csv not found. Skipping Traffic data cleaning.")
+        df_traffic = None
+    
+    try:
+        df_crime = pd.read_csv(PROJECT_ROOT / "data" / "raw" / "crime_raw.csv")
+        logger.info(f"Loaded crime data: {len(df_crime)} records")
+    except FileNotFoundError:
+        logger.warning("crime_raw.csv not found. Skipping crime data cleaning.")
+        df_crime = None
     
     # Clean each dataset
     if df_311 is not None and not df_311.empty:
@@ -309,12 +357,19 @@ def main():
         df_cta_clean.to_csv(output_path, index=False)
         logger.info(f"Saved cleaned CTA data: {len(df_cta_clean)} records")
     
-    if df_tweets is not None and not df_tweets.empty:
-        df_tweets_clean = clean_tweet_data(df_tweets)
-        output_path = PROJECT_ROOT / "data" / "cleaned" / "tweets.csv"
+    if df_traffic is not None and not df_traffic.empty:
+        df_traffic_clean = clean_traffic_data(df_traffic)
+        output_path = PROJECT_ROOT / "data" / "cleaned" / "traffic_data.csv"
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        df_tweets_clean.to_csv(output_path, index=False)
-        logger.info(f"Saved cleaned tweet data: {len(df_tweets_clean)} records")
+        df_traffic_clean.to_csv(output_path, index=False)
+        logger.info(f"Saved cleaned Traffic data: {len(df_traffic_clean)} records")
+    
+    if df_crime is not None and not df_crime.empty:
+        df_crime_clean = clean_crime_data(df_crime)
+        output_path = PROJECT_ROOT / "data" / "cleaned" / "crime_data.csv"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        df_crime_clean.to_csv(output_path, index=False)
+        logger.info(f"Saved cleaned crime data: {len(df_crime_clean)} records")
     
     logger.info("Data cleaning complete")
 

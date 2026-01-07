@@ -181,18 +181,96 @@ def filter_transit_related(df: pd.DataFrame) -> pd.DataFrame:
     return df_filtered
 
 
+def fetch_311_data_for_year(year: int = 2025, limit: int = 100000) -> pd.DataFrame:
+    """
+    Fetch 311 data for a specific year
+    
+    Args:
+        year: Year to fetch data for (default: 2025)
+        limit: Maximum number of records to fetch
+    
+    Returns:
+        DataFrame with 311 service request data
+    """
+    logger.info(f"Fetching 311 data for year {year}")
+    
+    # Calculate date range for the entire year
+    start_date = datetime(year, 1, 1)
+    end_date = datetime(year, 12, 31, 23, 59, 59)
+    
+    # Format dates for API query
+    start_date_str = start_date.strftime('%Y-%m-%dT00:00:00.000')
+    end_date_str = end_date.strftime('%Y-%m-%dT23:59:59.999')
+    
+    logger.info(f"Fetching 311 data from {start_date_str} to {end_date_str}")
+    
+    all_records = []
+    offset = 0
+    batch_size = 5000
+    
+    while offset < limit:
+        try:
+            params = {
+                '$limit': min(batch_size, limit - offset),
+                '$offset': offset,
+                '$where': f"created_date >= '{start_date_str}' AND created_date <= '{end_date_str}'",
+                '$order': 'created_date DESC'
+            }
+            
+            logger.info(f"Fetching batch: offset={offset}, limit={params['$limit']}")
+            
+            response = requests.get(BASE_URL, params=params, timeout=30)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            if not data:
+                logger.info("No more records to fetch")
+                break
+            
+            all_records.extend(data)
+            logger.info(f"Fetched {len(data)} records (total: {len(all_records)})")
+            
+            if len(data) < batch_size:
+                break
+            
+            offset += len(data)
+            time.sleep(0.5)
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching data: {e}")
+            break
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            break
+    
+    if not all_records:
+        logger.warning("No records fetched")
+        return pd.DataFrame()
+    
+    df = pd.DataFrame(all_records)
+    logger.info(f"Total records fetched: {len(df)}")
+    
+    return df
+
+
 def main():
     """Main function to collect and save 311 data"""
     logger.info("Starting 311 data collection")
     
-    # Try with keyword filter first (more flexible)
-    logger.info("Attempting to fetch 311 data with keyword filter...")
-    df = fetch_311_data(limit=50000, days_back=90, use_keyword_filter=True)
+    # Fetch data for 2025
+    df = fetch_311_data_for_year(year=2025, limit=100000)
     
-    # If that fails, try without service type filter
     if df.empty:
-        logger.info("No data with keyword filter. Trying without service type filter...")
-        df = fetch_311_data(limit=50000, days_back=90, use_keyword_filter=False)
+        logger.warning("No 2025 data found. Trying fallback method...")
+        # Fallback: Try with keyword filter
+        logger.info("Attempting to fetch 311 data with keyword filter...")
+        df = fetch_311_data(limit=100000, days_back=365, use_keyword_filter=True)
+        
+        # If that fails, try without service type filter
+        if df.empty:
+            logger.info("No data with keyword filter. Trying without service type filter...")
+            df = fetch_311_data(limit=100000, days_back=365, use_keyword_filter=False)
     
     if df.empty:
         logger.warning("No data collected. Exiting.")

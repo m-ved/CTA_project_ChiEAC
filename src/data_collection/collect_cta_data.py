@@ -226,16 +226,148 @@ def combine_ridership_data(bus_df: pd.DataFrame, train_df: pd.DataFrame) -> pd.D
     return combined
 
 
+def fetch_cta_data_for_year(year: int = 2025, limit: int = 100000) -> pd.DataFrame:
+    """
+    Fetch CTA ridership data for a specific year
+    
+    Args:
+        year: Year to fetch data for (default: 2025)
+        limit: Maximum number of records to fetch per mode
+    
+    Returns:
+        Combined DataFrame with bus and train data for the year
+    """
+    logger.info(f"Fetching CTA ridership data for year {year}")
+    
+    # Calculate date range for the entire year
+    start_date = datetime(year, 1, 1)
+    end_date = datetime(year, 12, 31, 23, 59, 59)
+    
+    # Format dates for API query
+    start_date_str = start_date.strftime('%Y-%m-%dT00:00:00.000')
+    end_date_str = end_date.strftime('%Y-%m-%dT23:59:59.999')
+    
+    # Fetch bus data
+    logger.info("Fetching CTA bus ridership data")
+    all_bus_records = []
+    offset = 0
+    batch_size = 5000
+    
+    while offset < limit:
+        try:
+            params = {
+                '$limit': min(batch_size, limit - offset),
+                '$offset': offset,
+                '$where': f"date >= '{start_date_str}' AND date <= '{end_date_str}'",
+                '$order': 'date DESC'
+            }
+            
+            logger.info(f"Fetching bus data: offset={offset}, limit={params['$limit']}")
+            
+            response = requests.get(CTA_BUS_RIDERSHIP_URL, params=params, timeout=30)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            if not data:
+                break
+            
+            all_bus_records.extend(data)
+            logger.info(f"Fetched {len(data)} bus records (total: {len(all_bus_records)})")
+            
+            if len(data) < batch_size:
+                break
+            
+            offset += len(data)
+            time.sleep(0.5)
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching bus data: {e}")
+            break
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            break
+    
+    bus_df = pd.DataFrame(all_bus_records) if all_bus_records else pd.DataFrame()
+    if not bus_df.empty:
+        bus_df['mode'] = 'bus'
+    
+    # Fetch train data
+    logger.info("Fetching CTA train ridership data")
+    all_train_records = []
+    offset = 0
+    
+    endpoints_to_try = [CTA_TRAIN_RIDERSHIP_URL] + CTA_TRAIN_ALTERNATIVE_URLS
+    
+    for endpoint_url in endpoints_to_try:
+        logger.info(f"Trying train endpoint: {endpoint_url}")
+        all_train_records = []
+        offset = 0
+        
+        while offset < limit:
+            try:
+                params = {
+                    '$limit': min(batch_size, limit - offset),
+                    '$offset': offset,
+                    '$where': f"date >= '{start_date_str}' AND date <= '{end_date_str}'",
+                    '$order': 'date DESC'
+                }
+                
+                logger.info(f"Fetching train data: offset={offset}, limit={params['$limit']}")
+                
+                response = requests.get(endpoint_url, params=params, timeout=30)
+                response.raise_for_status()
+                
+                data = response.json()
+                
+                if not data:
+                    break
+                
+                all_train_records.extend(data)
+                logger.info(f"Fetched {len(data)} train records (total: {len(all_train_records)})")
+                
+                if len(data) < batch_size:
+                    break
+                
+                offset += len(data)
+                time.sleep(0.5)
+                
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Error fetching train data from {endpoint_url}: {e}")
+                break
+            except Exception as e:
+                logger.error(f"Unexpected error with {endpoint_url}: {e}")
+                break
+        
+        if all_train_records:
+            logger.info(f"Successfully fetched train data from {endpoint_url}")
+            break
+    
+    train_df = pd.DataFrame(all_train_records) if all_train_records else pd.DataFrame()
+    if not train_df.empty:
+        if 'stationname' in train_df.columns and 'route' not in train_df.columns:
+            train_df['route'] = train_df['stationname']
+        train_df['mode'] = 'train'
+    
+    # Combine datasets
+    combined_df = combine_ridership_data(bus_df, train_df)
+    
+    return combined_df
+
+
 def main():
     """Main function to collect and save CTA ridership data"""
     logger.info("Starting CTA ridership data collection")
     
-    # Fetch bus and train data
-    bus_df = fetch_cta_bus_ridership(days_back=90, limit=50000)
-    train_df = fetch_cta_train_ridership(days_back=90, limit=50000)
+    # Fetch data for 2025
+    combined_df = fetch_cta_data_for_year(year=2025, limit=100000)
     
-    # Combine datasets
-    combined_df = combine_ridership_data(bus_df, train_df)
+    if combined_df.empty:
+        logger.warning("No 2025 CTA ridership data collected. Trying fallback method...")
+        # Fallback: Fetch bus and train data with days_back
+        bus_df = fetch_cta_bus_ridership(days_back=365, limit=100000)
+        train_df = fetch_cta_train_ridership(days_back=365, limit=100000)
+        combined_df = combine_ridership_data(bus_df, train_df)
     
     if combined_df.empty:
         logger.warning("No CTA ridership data collected. Exiting.")

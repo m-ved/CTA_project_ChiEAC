@@ -1,0 +1,38 @@
+============================================================
+CORRELATION ANALYSIS REPORT
+============================================================
+
+KEY CORRELATIONS:
+------------------------------------------------------------
+Sentiment Polarity vs. CTA Ridership: Data not available
+
+311 Complaints vs. Negative Tweets:
+  Correlation: 0.285 ***
+  P-value: 0.0174
+  Sample size: 69
+
+Sentiment Polarity vs. 311 Complaints: Data not available
+
+CTA Ridership vs. 311 Complaints: Data not available
+
+============================================================
+ALL CORRELATIONS:
+------------------------------------------------------------
+complaints_vs_negative_tweets: r=0.285, p=0.0174 ***
+complaints_vs_positive_tweets: r=0.273, p=0.0231 ***
+complaints_vs_ridership: r=-0.910, p=0.0000 ***
+complaints_vs_sentiment: r=0.090, p=0.4615 
+complaints_vs_transit_complaints: r=0.969, p=0.0000 ***
+negative_tweets_vs_positive_tweets: r=0.908, p=0.0000 ***
+negative_tweets_vs_ridership: r=-0.226, p=0.0620 
+negative_tweets_vs_sentiment: r=0.187, p=0.1235 
+negative_tweets_vs_transit_complaints: r=0.306, p=0.0105 ***
+positive_tweets_vs_ridership: r=-0.238, p=0.0494 ***
+positive_tweets_vs_sentiment: r=0.572, p=0.0000 ***
+positive_tweets_vs_transit_complaints: r=0.315, p=0.0084 ***
+ridership_vs_sentiment: r=-0.121, p=0.3233 
+ridership_vs_transit_complaints: r=-0.873, p=0.0000 ***
+sentiment_vs_transit_complaints: r=0.144, p=0.2366 
+
+*** = Statistically significant (p < 0.05)
+============================================================
