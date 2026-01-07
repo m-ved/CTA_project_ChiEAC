@@ -1,18 +1,18 @@
 # CityPulse: Urban Mobility & Service Dashboard
 
-An integrated dashboard that visualizes mobility patterns and service requests in Chicago, combining transportation data, bike share usage, crime statistics, and 311 service data to reveal urban trends and patterns.
+An integrated dashboard that visualizes mobility patterns and service requests in Chicago, combining CTA ridership, traffic volume/speed, crime statistics, and 311 service data to reveal urban trends and patterns.
 
 ## Project Overview
 
-CityPulse integrates multiple data sources to provide insights into how transportation usage, bike share patterns, crime, and service requests correlate with each other. The project demonstrates API integration, data wrangling, statistical analysis, and visualization techniques.
+CityPulse integrates multiple data sources to provide insights into how transportation usage (CTA ridership and traffic volume/speed), crime, and 311 service requests correlate with each other. The project demonstrates API integration, data wrangling, statistical analysis, and visualization techniques.
 
 ## Features
 
-- **Data Integration**: Combines CTA ridership, traffic volume, crime data, and 311 service request data
+- **Data Integration**: Combines CTA ridership, traffic volume/speed, crime data, and 311 service request data
 - **Interactive Dashboard**: Real-time visualization of trends and correlations
-- **Correlation Analysis**: Identifies relationships between ridership, complaints, bike trips, and crime
-- **Geospatial Visualization**: Maps complaint locations with detailed information
-- **Statistical Analysis**: Advanced statistical metrics including confidence intervals, p-values, and effect sizes
+- **Correlation Analysis**: Identifies relationships between ridership, complaints, traffic volume/speed, and crime
+- **Geospatial Visualization**: Maps complaint and crime locations with detailed information
+- **Statistical Analysis**: Advanced statistical metrics including confidence intervals, p-values, effect sizes, and regression
 
 ## Technology Stack
 
@@ -272,8 +272,8 @@ The project specification requires a Tableau or Power BI dashboard. To create on
 
 ### Traffic Volume Data
 - **Source**: Chicago Data Portal
-- **Endpoint**: `https://data.cityofchicago.org/resource/8v9j-bter.json`
-- **Data**: Daily traffic volume counts, average speeds, traffic flow data
+- **Endpoint**: `https://data.cityofchicago.org/resource/4g9f-3jbs.json`
+- **Data**: Historical traffic congestion estimates by segment (volume proxies, speeds, and message/bus counts)
 - **Update Frequency**: Daily
 
 ### Crime Data
@@ -336,15 +336,14 @@ The project includes several types of visualizations:
 ### Data Files
 - `data/cleaned/311_data.csv` - Cleaned 311 service requests
 - `data/cleaned/cta_ridership.csv` - Cleaned CTA ridership data
-- `data/cleaned/tweets.csv` - Cleaned tweet data
-- `data/cleaned/tweets_with_sentiment.csv` - Tweets with sentiment scores
-- `data/combined/daily_sentiment.csv` - Daily aggregated sentiment
-- `data/combined/combined_data.csv` - Fully integrated dataset
+- `data/cleaned/traffic_data.csv` - Cleaned traffic congestion/volume data
+- `data/cleaned/crime_data.csv` - Cleaned crime data
+- `data/combined/combined_data.csv` - Fully integrated daily dataset (CTA, 311, traffic, crime)
 
-### Analysis Files
+### Analysis/Insight Files
 - `docs/correlation_report.txt` - Correlation analysis report
-- `visualizations/correlation_matrix.csv` - Correlation matrix
-- `visualizations/*.html` - Interactive visualizations
+- `docs/1_page_insights.md` - One-page executive summary of key findings
+- `docs/PROJECT_WORK_SUMMARY.md` - Detailed project summary
 
 ### Tableau/Power BI Export Files
 - `data/exports/combined_data_for_tableau.csv` - Optimized data for Tableau/Power BI (CSV format)
@@ -352,7 +351,7 @@ The project includes several types of visualizations:
 - Created by running: `python scripts/export_for_tableau.py`
 
 ### Documentation
-- `docs/data_dictionary.md` - Complete data dictionary
+- `docs/data_dictionary.md` - Data dictionary (fields and definitions)
 - `docs/insights.md` - Detailed findings and insights
 - `docs/1_page_insights.md` - **1-page data story** (required by project spec)
 - `docs/tableau_dashboard_guide.md` - Step-by-step guide for creating Tableau/Power BI dashboard
