@@ -3763,11 +3763,20 @@ def update_complaint_map(start_date, end_date, complaint_type):
     return fig
 
 
-def run_dashboard(host='127.0.0.1', port=8050, debug=True):
-    """Run the dashboard server"""
+def run_dashboard():
+    """Run the dashboard server.
+    
+    On Render (and similar platforms), the PORT environment variable is provided
+    by the platform. We bind to 0.0.0.0 so the container is reachable externally.
+    """
     df = load_data()
     app.layout = create_dashboard_layout(df)
-    
+
+    # Use platform-provided PORT if available (default to 8050 for local dev)
+    port = int(os.environ.get("PORT", "8050"))
+    host = "0.0.0.0"
+    debug = False  # Disable debug mode in production
+
     logger.info(f"Starting dashboard server on http://{host}:{port}")
     logger.info(f"Access the dashboard at http://localhost:{port} or http://127.0.0.1:{port}")
     app.run(host=host, port=port, debug=debug)
