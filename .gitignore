@@ -35,6 +35,13 @@ data/raw/*.parquet
 *.json
 *.parquet
 
+# But allow essential processed data files needed for deployment (small files only)
+!data/combined/combined_data.csv
+!data/combined/daily_sentiment.csv
+
+# Exclude large cleaned files (they're too big for GitHub, will be included in Docker build locally)
+# Note: For deployment, build Docker image locally with all data files
+
 # Environment variables
 .env
 .env.local
